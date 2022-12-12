@@ -43,17 +43,26 @@ function this.getAttachPoints()
     return ATTACH_POINTS
 end
 
-function this.activeNpcReferences()
+function this.bitterCoastActorRefs()
     return coroutine.wrap(function()
-        coroutine.yield(tes3.player)
+        if this.isBitterCoastRegion(tes3.player.cell) then
+            coroutine.yield(tes3.player)
+        end
         for _, cell in ipairs(tes3.getActiveCells()) do
-            for ref in cell:iterateReferences(tes3.objectType.npc) do
-                if not ref.disabled or ref.deleted then
-                    coroutine.yield(ref)
+            if this.isBitterCoastRegion(cell) then
+                for ref in cell:iterateReferences(tes3.objectType.npc) do
+                    if not ref.disabled or ref.deleted then
+                        coroutine.yield(ref)
+                    end
                 end
             end
         end
     end)
+end
+
+---@param cell tes3cell
+function this.isBitterCoastRegion(cell)
+    return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
 end
 
 return this

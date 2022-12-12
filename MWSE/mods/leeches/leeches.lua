@@ -90,11 +90,7 @@ function Leeches:removeLeech(ref)
         return
     end
 
-    if self:anyActive() then
-        table.insert(self.vacantLeeches, leech.index)
-    else
-        ref.data.leeches = nil
-    end
+    table.insert(self.vacantLeeches, leech.index)
 
     local name = ("Leech - %d"):format(leech.index)
     local shape = ref.sceneNode:getObjectByName(name)
@@ -109,6 +105,11 @@ end
 ---@return boolean
 function Leeches:anyActive()
     return next(self.activeLeeches) ~= nil
+end
+
+---@return number
+function Leeches:numActive()
+    return #self.activeLeeches
 end
 
 return Leeches
