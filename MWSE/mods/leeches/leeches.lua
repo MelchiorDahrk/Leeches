@@ -59,10 +59,17 @@ function Leeches:addLeech(ref, timestamp)
 
     local bone = ref.sceneNode:getObjectByName(attachNode.parent.name)
     bone:attachChild(shape)
-
     bone:update()
     bone:updateEffects()
     bone:updateProperties()
+
+    if ref == tes3.player then
+        local bone1st = tes3.player1stPerson.sceneNode:getObjectByName(attachNode.parent.name)
+        bone1st:attachChild(shape:clone())
+        bone1st:update()
+        bone1st:updateEffects()
+        bone1st:updateProperties()
+    end
 
     tes3.messageBox("Leech Acquired! (%s)", ref)
 end
@@ -97,9 +104,14 @@ function Leeches:removeLeech(ref)
     if not shape then
         return
     end
-
     local parent = assert(shape.parent) ---@cast parent niNode
     parent:detachChild(shape)
+
+    if ref == tes3.player then
+        local shape1st = tes3.player1stPerson.sceneNode:getObjectByName(name)
+        local parent1st = assert(tes3.player1stPerson.sceneNode.parent) ---@cast parent niNode
+        parent1st:detachChild(shape1st)
+    end
 end
 
 ---@return boolean
