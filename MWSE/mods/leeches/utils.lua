@@ -65,4 +65,18 @@ function this.isBitterCoastRegion(cell)
     return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
 end
 
+function this.get1stAnd3rdSceneNode(ref)
+    return coroutine.wrap(function()
+        if ref == tes3.player then
+            coroutine.yield(tes3.player1stPerson.sceneNode)
+        end
+        coroutine.yield(ref.sceneNode)
+    end)
+end
+
+--- TODO: make this more robust.
+function this.isInsideScum(ref)
+    return ref.position.z < -20
+end
+
 return this

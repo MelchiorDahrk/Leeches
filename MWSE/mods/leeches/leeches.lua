@@ -1,14 +1,8 @@
 local utils = require("leeches.utils")
-
-local LIFESPAN_MIN_HOURS = 1
-local LIFESPAN_MAX_HOURS = 3
+local Leech = require("leeches.leech")
 
 ---@alias LeechIndex number
 ---@alias LeechExpireTime number
-
----@class Leech
----@field index LeechIndex
----@field expireTime LeechExpireTime
 
 ---@class Leeches
 ---@field activeLeeches Leech[]
@@ -18,17 +12,23 @@ Leeches.__index = Leeches
 
 ---@return Leeches
 function Leeches.new()
-    return setmetatable({
+    local data = {
         activeLeeches = {},
         vacantLeeches = utils.shuffle(utils.range(#utils.getAttachPoints())),
-    }, Leeches)
+    }
+    return setmetatable(data, Leeches)
+end
+
+---@return Leeches|nil
+function Leeches.get(ref)
+    return assert(ref.data).leeches
 end
 
 ---@return Leeches
 function Leeches.getOrCreate(ref)
-    local t = assert(ref.data)
-    t.leeches = t.leeches or Leeches.new()
-    return t.leeches
+    local data = assert(ref.data)
+    data.leeches = data.leeches or Leeches.new()
+    return data.leeches
 end
 
 ---@param ref tes3reference
@@ -42,11 +42,16 @@ function Leeches:addLeech(ref, timestamp)
         return
     end
 
-    -- TimeStamp so we can remove the leech when appropriate.
-    table.insert(self.activeLeeches, {
-        index = index,
-        expireTime = timestamp + math.random(LIFESPAN_MIN_HOURS, LIFESPAN_MAX_HOURS),
-    })
+    -- Create leech.
+
+    local leech = Leech:new(index, timestamp)
+    table.insert(self.activeLeeches, leech)
+
+    -- Trigger Sounds.
+
+    self:addSound(ref)
+
+    -- Attach Visuals.
 
     local attachPoints = utils.getAttachPoints()
     local attachNode = assert(attachPoints[index])
@@ -55,63 +60,52 @@ function Leeches:addLeech(ref, timestamp)
     shape.translation = attachNode.translation
     shape.rotation = attachNode.rotation
     shape.scale = attachNode.scale
-    shape.name = ("Leech - %d"):format(index)
+    shape.name = leech:sceneNodeName()
 
-    local bone = ref.sceneNode:getObjectByName(attachNode.parent.name)
-    bone:attachChild(shape)
-    bone:update()
-    bone:updateEffects()
-    bone:updateProperties()
-
-    if ref == tes3.player then
-        local bone1st = tes3.player1stPerson.sceneNode:getObjectByName(attachNode.parent.name)
-        bone1st:attachChild(shape:clone())
-        bone1st:update()
-        bone1st:updateEffects()
-        bone1st:updateProperties()
+    for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
+        local bone = sceneNode:getObjectByName(attachNode.parent.name)
+        bone:attachChild(shape:clone())
+        bone:update()
+        bone:updateEffects()
+        bone:updateProperties()
     end
-
-    tes3.messageBox("Leech Acquired! (%s)", ref)
 end
 
 ---@param ref tes3reference
 ---@param timestamp TimeStamp
 function Leeches:removeExpired(ref, timestamp)
-    while true do
-        local leech = self.activeLeeches[1]
-        if leech == nil then
-            return
-        end
+    while self:numActive() > 0 do
+        local leech = self:getOldestActiveLeech()
         if timestamp < leech.expireTime then
             return
         end
-        self:removeLeech(ref)
-        tes3.messageBox("Leech Expired! (%s)", ref)
+        self:removeLeech(ref, leech)
     end
 end
 
 ---@param ref tes3reference
-function Leeches:removeLeech(ref)
-    local leech = table.remove(self.activeLeeches, 1)
-    if not leech then
-        return
-    end
-
+function Leeches:removeLeech(ref, leech)
+    table.removevalue(self.activeLeeches, leech)
     table.insert(self.vacantLeeches, leech.index)
 
-    local name = ("Leech - %d"):format(leech.index)
-    local shape = ref.sceneNode:getObjectByName(name)
-    if not shape then
-        return
+    -- Remove Sounds.
+    if self:numActive() == 0 then
+        self:removeSound(ref)
     end
-    local parent = assert(shape.parent) ---@cast parent niNode
-    parent:detachChild(shape)
 
-    if ref == tes3.player then
-        local shape1st = tes3.player1stPerson.sceneNode:getObjectByName(name)
-        local parent1st = assert(tes3.player1stPerson.sceneNode.parent) ---@cast parent niNode
-        parent1st:detachChild(shape1st)
+    -- Detach Visuals.
+    ---@cast leech Leech
+    local name = leech:sceneNodeName()
+    for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
+        local shape = sceneNode:getObjectByName(name)
+        if shape then
+            shape.parent:detachChild(shape)
+        end
     end
+end
+
+function Leeches:getOldestActiveLeech()
+    return self.activeLeeches[1]
 end
 
 ---@return boolean
@@ -122,6 +116,24 @@ end
 ---@return number
 function Leeches:numActive()
     return #self.activeLeeches
+end
+
+---@param ref tes3reference
+function Leeches:addSound(ref)
+    if self:numActive() == 1 then
+        tes3.removeSound({ reference = ref, sound = "leech_sound2" })
+        tes3.playSound({ reference = ref, sound = "leech_sound1", loop = true })
+    end
+    if self:numActive() == 9 then
+        tes3.removeSound({ reference = ref, sound = "leech_sound1" })
+        tes3.playSound({ reference = ref, sound = "leech_sound2", loop = true })
+    end
+end
+
+---@param ref tes3reference
+function Leeches:removeSound(ref)
+    tes3.removeSound({ reference = ref, sound = "leech_sound1" })
+    tes3.removeSound({ reference = ref, sound = "leech_sound2" })
 end
 
 return Leeches
