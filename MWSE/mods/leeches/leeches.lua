@@ -60,7 +60,7 @@ function Leeches:addLeech(ref, timestamp)
     shape.translation = attachNode.translation
     shape.rotation = attachNode.rotation
     shape.scale = attachNode.scale
-    shape.name = leech:sceneNodeName()
+    shape.name = leech:getName()
 
     for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
         local bone = sceneNode:getObjectByName(attachNode.parent.name)
@@ -68,18 +68,6 @@ function Leeches:addLeech(ref, timestamp)
         bone:update()
         bone:updateEffects()
         bone:updateProperties()
-    end
-end
-
----@param ref tes3reference
----@param timestamp TimeStamp
-function Leeches:removeExpired(ref, timestamp)
-    while self:numActive() > 0 do
-        local leech = self:getOldestActiveLeech()
-        if timestamp < leech.expireTime then
-            return
-        end
-        self:removeLeech(ref, leech)
     end
 end
 
@@ -95,7 +83,7 @@ function Leeches:removeLeech(ref, leech)
 
     -- Detach Visuals.
     ---@cast leech Leech
-    local name = leech:sceneNodeName()
+    local name = leech:getName()
     for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
         local shape = sceneNode:getObjectByName(name)
         if shape then
@@ -104,13 +92,20 @@ function Leeches:removeLeech(ref, leech)
     end
 end
 
-function Leeches:getOldestActiveLeech()
-    return self.activeLeeches[1]
+---@param ref tes3reference
+---@param timestamp TimeStamp
+function Leeches:removeExpired(ref, timestamp)
+    while self:numActive() > 0 do
+        local leech = self:getOldestActiveLeech()
+        if timestamp < leech.expireTime then
+            return
+        end
+        self:removeLeech(ref, leech)
+    end
 end
 
----@return boolean
-function Leeches:anyActive()
-    return next(self.activeLeeches) ~= nil
+function Leeches:getOldestActiveLeech()
+    return self.activeLeeches[1]
 end
 
 ---@return number

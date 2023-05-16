@@ -1,9 +1,46 @@
 local Leeches = require("leeches.leeches")
 
-local PHYSICS_FPS = 1 / 60 -- 30 fps
+local PHYSICS_FPS = 1 / 60
+
+local UP = tes3vector3.new(0, 0, 1)
+local DOWN = tes3vector3.new(0, 0, -1)
+
+local SPIN = tes3matrix33.new()
+SPIN:toRotationZ(math.rad(120) * PHYSICS_FPS)
 
 --- TODO: make leeches continue falling after reloading?
 local fallingLeeches = {}
+
+---@param vfxNode niNode
+---@return niParticles, niPerParticleData
+local function getParticle(vfxNode)
+    local particles = vfxNode:getObjectByName("Particles") --[[@as niParticles]]
+    local particle = particles.controller.particleData[1] ---@diagnostic disable-line
+    return particles, particle
+end
+
+---@param ref tes3reference
+local function createLeechVFX(ref)
+    local vfx = tes3.createVisualEffect({
+        object = "VFX_Leech",
+        position = ref.position,
+        lifespan = 10,
+    })
+
+    -- random initial momentum (30 to 60)
+    local momentum = 30 + 30 * math.random()
+
+    -- random upward bias (15% to 30%)
+    local bias = 0.15 + 0.15 * math.random()
+    local direction = ref.rightDirection:lerp(UP, bias)
+
+    -- apply initial particle velocity
+    local particles, particle = getParticle(vfx.effectNode)
+    local r = particles.worldTransform.rotation:transpose()
+    particle.velocity = r * direction * momentum
+
+    return vfx
+end
 
 --- Allow shaking off leeches by attacking.
 ---
@@ -20,27 +57,23 @@ local function onAttack(e)
     end
 
     local shape = leech:getSceneNode(e.reference)
-    if not shape then
+    if shape == nil then
         return
     end
 
+    -- Create the leech reference.
     local t = shape.worldTransform
-    local orientation = t.rotation:toEulerXYZ()
-
     local ref = tes3.createReference({
         object = "leech_ingred",
         cell = e.reference.cell,
         position = t.translation,
-        orientation = orientation,
+        orientation = t.rotation:toEulerXYZ(),
     })
 
-    local vfx = tes3.createVisualEffect({
-        object = "VFX_Leech",
-        position = t.translation,
-        lifespan = 10,
-    })
+    -- Create associated leech VFX.
+    local vfx = createLeechVFX(ref)
 
-    -- Track the ingredient and its associated vfx.
+    -- Track the reference with its associated vfx.
     fallingLeeches[ref] = vfx.effectNode
 
     leeches:removeLeech(e.reference, leech)
@@ -54,37 +87,46 @@ local function onPhysicsTick()
         ---@cast ref tes3reference
         ---@cast vfxNode niNode
 
-        -- Snap reference to the NiGravity-driven particle vertex.
+        -- Get position of gravity-driven particle.
         local particles = vfxNode:getObjectByName("Particles")
         local vertex = particles.data.vertices[1]
-        local t = vfxNode.worldTransform
-        ref.position = t.rotation * t.scale * vertex + t.translation
+        local position = vfxNode.worldTransform * vertex
+
+        -- Get orientation with some random spin added.
+        local orientation = (SPIN * ref.sceneNode.rotation):toEulerXYZ()
 
         -- Detect if the reference has collided with the ground.
         local rayhit = tes3.rayTest({
-            root = tes3.game.worldLandscapeRoot,
-            position = ref.position,
-            direction = { 0, 0, -1 },
+            position = position,
+            direction = DOWN,
+            ignore = { tes3.game.worldPickRoot, tes3.player.sceneNode },
         })
 
-        -- No ground exists? How do we handle this gracefully?
-        if rayhit == nil then
-            fallingLeeches[ref] = nil
-            ref:delete()
-            return
-        end
+        -- Assume this is ground level if there was no intersection.
+        local intersection = rayhit and rayhit.intersection or position
 
         -- When close to the ground snap to it and stop tracking.
-        if ref.position:distance(rayhit.intersection) <= 10 then
-            ref.position = rayhit.intersection
+        if position:distance(intersection) <= 1 then
             fallingLeeches[ref] = nil
+            position.z = position.z + ref.object.boundingBox.max.z
         end
+
+        -- Apply updates
+        ref.position = position
+        ref.orientation = orientation
     end
 end
 event.register("loaded", function()
+    -- TODO: Instead we could trigger on cell changed when intering a leech region.
     timer.start({
         iterations = -1,
         duration = PHYSICS_FPS,
         callback = onPhysicsTick,
     })
+end)
+
+--- Stop tracking references if they get deactivated.
+---
+event.register("referenceDeactivated", function(e)
+    fallingLeeches[e.reference] = nil
 end)

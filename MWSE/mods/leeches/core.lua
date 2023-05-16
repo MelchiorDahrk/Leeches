@@ -18,7 +18,7 @@ local function globalAttachLeeches(timestamp)
             local leeches = Leeches.getOrCreate(ref)
             leeches:addLeech(ref, timestamp)
             leechedReferences[ref] = true
-            -- tes3.messageBox("Leech Acquired! (%s) (%d)", ref, leeches:numActive())
+            tes3.messageBox("Leech Acquired! (%s) (%d)", ref, leeches:numActive())
         end
     end
 end
