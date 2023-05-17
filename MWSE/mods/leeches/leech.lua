@@ -9,6 +9,8 @@ local LIFESPAN_MAX_HOURS = 3
 local Leech = {}
 Leech.__index = Leech
 
+--- Create a new leech instance.
+---
 ---@param index LeechIndex
 ---@param timestamp number
 ---@return Leech

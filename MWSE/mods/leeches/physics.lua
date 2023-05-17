@@ -1,4 +1,5 @@
 local Leeches = require("leeches.leeches")
+local utils = require("leeches.utils")
 
 local PHYSICS_FPS = 1 / 60
 
@@ -27,11 +28,11 @@ local function createLeechVFX(ref)
         lifespan = 10,
     })
 
-    -- random initial momentum (30 to 60)
-    local momentum = 30 + 30 * math.random()
+    -- initial momentum (30 to 60)
+    local momentum = utils.rand(30, 60)
 
-    -- random upward bias (15% to 30%)
-    local bias = 0.15 + 0.15 * math.random()
+    -- upward bias (15% to 30%)
+    local bias = utils.rand(0.15, 0.30)
     local direction = ref.rightDirection:lerp(UP, bias)
 
     -- apply initial particle velocity

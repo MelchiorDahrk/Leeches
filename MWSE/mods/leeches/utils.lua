@@ -22,6 +22,13 @@ function this.shuffle(t)
     return t
 end
 
+--- Return a random number between min and max.
+---@param min number
+---@param max number
+function this.rand(min, max)
+    return min + (max - min) * math.random()
+end
+
 ---@return niNode
 function this.getLeechMesh()
     if LEECH_MESH == nil then
@@ -43,6 +50,17 @@ function this.getAttachPoints()
     return ATTACH_POINTS
 end
 
+---@param cell tes3cell
+function this.isBitterCoastRegion(cell)
+    return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
+end
+
+--- TODO: make this more robust.
+function this.isInsideScum(ref)
+    return ref.position.z < -20
+end
+
+---@return fun():tes3reference
 function this.bitterCoastActorRefs()
     return coroutine.wrap(function()
         if this.isBitterCoastRegion(tes3.player.cell) then
@@ -51,7 +69,7 @@ function this.bitterCoastActorRefs()
         for _, cell in ipairs(tes3.getActiveCells()) do
             if this.isBitterCoastRegion(cell) then
                 for ref in cell:iterateReferences(tes3.objectType.npc) do
-                    if not ref.disabled or ref.deleted then
+                    if not (ref.disabled or ref.deleted) then
                         coroutine.yield(ref)
                     end
                 end
@@ -60,11 +78,7 @@ function this.bitterCoastActorRefs()
     end)
 end
 
----@param cell tes3cell
-function this.isBitterCoastRegion(cell)
-    return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
-end
-
+---@return fun():niNode
 function this.get1stAnd3rdSceneNode(ref)
     return coroutine.wrap(function()
         if ref == tes3.player then
@@ -72,11 +86,6 @@ function this.get1stAnd3rdSceneNode(ref)
         end
         coroutine.yield(ref.sceneNode)
     end)
-end
-
---- TODO: make this more robust.
-function this.isInsideScum(ref)
-    return ref.position.z < -20
 end
 
 return this

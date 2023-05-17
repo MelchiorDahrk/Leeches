@@ -4,9 +4,11 @@ local Leech = require("leeches.leech")
 ---@alias LeechIndex number
 ---@alias LeechExpireTime number
 
+--- A collection of leeches attached to a reference.
+---
 ---@class Leeches
----@field activeLeeches Leech[]
----@field vacantLeeches LeechIndex[]
+---@field activeLeeches Leech[] The currently active leeches, sorted according to their age.
+---@field vacantLeeches LeechIndex[] The indices of the vacant leech slots.
 local Leeches = {}
 Leeches.__index = Leeches
 
@@ -21,14 +23,20 @@ end
 
 ---@return Leeches|nil
 function Leeches.get(ref)
-    return assert(ref.data).leeches
+    if ref.supportsLuaData then
+        local leeches = ref.data.leeches
+        return leeches and setmetatable(leeches, Leeches)
+    end
 end
 
 ---@return Leeches
 function Leeches.getOrCreate(ref)
-    local data = assert(ref.data)
-    data.leeches = data.leeches or Leeches.new()
-    return data.leeches
+    local leeches = Leeches.get(ref)
+    if leeches == nil then
+        leeches = Leeches.new()
+        ref.data.leeches = leeches
+    end
+    return leeches
 end
 
 ---@param ref tes3reference
@@ -64,7 +72,7 @@ function Leeches:addLeech(ref, timestamp)
 
     for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
         local bone = sceneNode:getObjectByName(attachNode.parent.name)
-        bone:attachChild(shape:clone())
+        bone:attachChild(shape:clone()) ---@diagnostic disable-line
         bone:update()
         bone:updateEffects()
         bone:updateProperties()
@@ -92,6 +100,8 @@ function Leeches:removeLeech(ref, leech)
     end
 end
 
+--- Remove all leeches from the reference that have expired according to the given timestamp.
+---
 ---@param ref tes3reference
 ---@param timestamp TimeStamp
 function Leeches:removeExpired(ref, timestamp)
