@@ -1,7 +1,7 @@
 float time;
 float2 rcpres;
 
-static const float BORDER_RATIO = 1.3;
+static const float BORDER_RATIO = 21.0 / 9.0;
 static const float3 GRAIN_STRENGTH = float3(25.0, 25.0, 25.0);
 static const float3 BLACK = float3(0.0, 0.0, 0.0);
 
