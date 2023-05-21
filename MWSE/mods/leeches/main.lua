@@ -1,5 +1,5 @@
 local function onInitialized()
-    if tes3.isModActive("Leeches.esp") then
+    if tes3.isModActive("Leeches.esm") then
         -- mcm
         dofile("leeches.mcm")
         -- mechanics
