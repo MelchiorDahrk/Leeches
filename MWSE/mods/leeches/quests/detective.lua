@@ -1,14 +1,16 @@
+--- Get the position and orientation for the chair animation.
 ---@return tes3vector3, tes3vector3
 local function getChairAnimationPosition()
     local chair = tes3.getReference("leeches_detective_chair")
 
-    -- The chair origin is at its center, but NPC origins are at their feet.
+    -- Offset height so we are at the chair's feet rather than its center.
     local position = chair.position:copy()
     position.z = position.z + chair.object.boundingBox.min.z
 
-    -- The chair is facing backwards. Rotate the orientation 180 degrees.
+    -- Rotate 180 degrees so we face the correct direction for sitting.
     local orientation = chair.orientation:copy()
     orientation.z = orientation.z + math.rad(180)
+
     return position, orientation
 end
 
