@@ -1,7 +1,9 @@
---- Get the position and orientation for the chair animation.
----@return tes3vector3, tes3vector3
-local function getChairAnimationPosition()
-    local chair = tes3.getReference("leeches_detective_chair")
+local function playSleepingAnimation()
+    local detective = debug.log(tes3.getReference("leech_private_eye_01"))
+    local chair = debug.log(tes3.getReference("leech_office_chair"))
+    if not (detective and chair) then
+        return
+    end
 
     -- Offset height so we are at the chair's feet rather than its center.
     local position = chair.position:copy()
@@ -11,34 +13,28 @@ local function getChairAnimationPosition()
     local orientation = chair.orientation:copy()
     orientation.z = orientation.z + math.rad(180)
 
-    return position, orientation
-end
-
-local function playSleepingAnimation()
-    local ref = tes3.getReference("leeches_detective")
-
     -- Center on the chair.
-    ref.position, ref.orientation = getChairAnimationPosition()
+    detective.position = position
+    detective.orientation = orientation
 
     -- Disable greeting/turning.
-    ref.mobile.hello = 0
+    detective.mobile.hello = 0
 
     -- Play the animation.
     tes3.playAnimation({
-        reference = ref,
+        reference = detective,
         group = tes3.animationGroup.idle9,
         mesh = "leeches\\k\\chair_sleeping.nif",
     })
 
     -- Play snoring sounds.
     tes3.playSound({
-        reference = ref,
+        reference = detective,
         sound = "leeches_male_snoring",
         loop = true,
     })
 end
-
-event.register(tes3.event.cellChanged, function(e)
+event.register(tes3.event.cellActivated, function(e)
     if e.cell.id == "Balmora, Western Guard Tower North" then
         playSleepingAnimation()
     end

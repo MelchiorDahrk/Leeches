@@ -1,3 +1,5 @@
+local utils = require("leeches.utils")
+
 local LIFESPAN_MIN_HOURS = 1
 local LIFESPAN_MAX_HOURS = 3
 
@@ -15,7 +17,7 @@ Leech.__index = Leech
 ---@param timestamp number
 ---@return Leech
 function Leech:new(index, timestamp)
-    local lifespan = math.random(LIFESPAN_MIN_HOURS, LIFESPAN_MAX_HOURS)
+    local lifespan = utils.rand(LIFESPAN_MIN_HOURS, LIFESPAN_MAX_HOURS)
     local data = {
         index = index,
         expireTime = timestamp + lifespan,
