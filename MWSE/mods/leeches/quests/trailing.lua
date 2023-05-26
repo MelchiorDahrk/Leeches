@@ -1,4 +1,4 @@
-local log = require("leeches.logger")
+local log = require("leeches.log")
 local pathing = require("leeches.pathing")
 local utils = require("leeches.utils")
 

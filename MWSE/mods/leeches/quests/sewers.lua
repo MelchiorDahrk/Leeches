@@ -7,6 +7,10 @@ local animations = {
         mesh = "leeches\\k\\log_sit.nif",
         prop = "leech_sewers_sitter_log",
     },
+    ["leech_sewers_leaner"] = {
+        mesh = "leeches\\k\\rail_lean.nif",
+        prop = "leech_sewers_leaner_rail",
+    },
 }
 
 local animationStatus = {

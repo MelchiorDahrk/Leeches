@@ -1,4 +1,4 @@
-local log = require("leeches.logger")
+local log = require("leeches.log")
 local utils = require("leeches.utils")
 
 local this = {}
