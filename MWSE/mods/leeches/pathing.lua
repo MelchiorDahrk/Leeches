@@ -1,4 +1,4 @@
-local logger = require("leeches.logger")
+local log = require("leeches.logger")
 local utils = require("leeches.utils")
 
 local this = {}
@@ -39,7 +39,7 @@ local function update(e)
     -- Get the reference.
     local ref = utils.getReference(data.reference)
     if ref == nil then
-        logger:error("pathing: invalid reference (%s)", data.reference)
+        log:error("pathing: invalid reference (%s)", data.reference)
         e.timer:cancel()
         return
     end
@@ -48,14 +48,14 @@ local function update(e)
     if data.onTick then
         local callback = assert(pathingCallbacks[data.onTick])
         if callback(e.timer, ref) ~= nil then
-            logger:trace("pathing: paused (%s)", data.reference)
+            log:trace("pathing: paused (%s)", data.reference)
             return
         end
     end
 
     -- Ensure the reference is alive.
     if ref.isDead then
-        logger:debug("pathing: dead reference (%s)", data.reference)
+        log:debug("pathing: dead reference (%s)", data.reference)
         e.timer:cancel()
         return
     end
@@ -63,7 +63,7 @@ local function update(e)
     -- Ensure the reference is in an active cell.
     local mobile = ref.mobile
     if not (mobile and mobile.activeAI) then
-        logger:debug("pathing: inactive reference (%s)", data.reference)
+        log:debug("pathing: inactive reference (%s)", data.reference)
         return
     end
 
@@ -104,7 +104,7 @@ local function update(e)
     end
 
     -- All finished, end the timer.
-    logger:debug("pathing: finished (%s)", data.reference)
+    log:debug("pathing: finished (%s)", data.reference)
     e.timer:cancel()
 end
 timer.register("leeches:pathing:update", update)

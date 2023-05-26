@@ -1,11 +1,11 @@
-local logger = require("leeches.logger")
+local log = require("leeches.logger")
 local pathing = require("leeches.pathing")
 local utils = require("leeches.utils")
 
 local function startTrailingSequence()
     local ref = utils.getReference("leech_npc_mondrar")
     if ref == nil then
-        logger:error("Failed to get Mondrar reference")
+        log:error("Failed to get Mondrar reference")
         return
     end
 
