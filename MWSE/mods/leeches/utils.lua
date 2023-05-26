@@ -123,4 +123,26 @@ function this.controllersRecursive(sceneNode)
     end)
 end
 
+--- Optimized (cached) version of `tes3.getReference`.
+---
+---@param id string
+---@return tes3reference|nil
+function this.getReference(id)
+    ---@type table<string, mwseSafeObjectHandle>
+    local cache = table.getset(tes3.player.tempData, "getReferenceCache", {})
+
+    -- Return the cached reference if it exists.
+    local handle = cache[id]
+    if handle and handle:valid() then
+        return handle:getObject()
+    end
+
+    -- Otherwise get the reference and cache it.
+    local ref = tes3.getReference(id)
+    if ref then
+        cache[id] = tes3.makeSafeObjectHandle(ref)
+        return ref
+    end
+end
+
 return this
