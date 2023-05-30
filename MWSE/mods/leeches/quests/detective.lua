@@ -35,7 +35,7 @@ local function playSleepingAnimation()
     })
 end
 event.register(tes3.event.cellActivated, function(e)
-    if e.cell.id == "Balmora, Western Guard Tower North" then
+    if e.cell.id == "Balmora, Detective's Office" then
         playSleepingAnimation()
     end
 end)
