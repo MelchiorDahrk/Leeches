@@ -1,6 +1,14 @@
+--- Make water droplets less synchronized.
+local function offsetWaterDrops()
+    local ref = tes3.getReference("leech_bucket_drip")
+    if ref then
+        tes3.setAnimationTiming({ reference = ref, timing = 2.0 })
+    end
+end
+
 local function playSleepingAnimation()
-    local detective = debug.log(tes3.getReference("leech_private_eye_01"))
-    local chair = debug.log(tes3.getReference("leech_office_chair"))
+    local detective = tes3.getReference("leech_private_eye_01")
+    local chair = tes3.getReference("leech_office_chair")
     if not (detective and chair) then
         return
     end
@@ -36,6 +44,7 @@ local function playSleepingAnimation()
 end
 event.register(tes3.event.cellActivated, function(e)
     if e.cell.id == "Balmora, Detective's Office" then
+        offsetWaterDrops()
         playSleepingAnimation()
     end
 end)
