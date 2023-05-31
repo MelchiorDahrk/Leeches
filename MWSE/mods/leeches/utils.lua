@@ -82,10 +82,10 @@ end
 ---@return fun():niNode
 function this.get1stAnd3rdSceneNode(ref)
     return coroutine.wrap(function()
+        coroutine.yield(ref.sceneNode)
         if ref == tes3.player then
             coroutine.yield(tes3.player1stPerson.sceneNode)
         end
-        coroutine.yield(ref.sceneNode)
     end)
 end
 

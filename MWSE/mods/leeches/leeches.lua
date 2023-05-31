@@ -1,4 +1,7 @@
+local log = require("leeches.log")
 local utils = require("leeches.utils")
+local physics = require("leeches.physics")
+
 local Leech = require("leeches.leech")
 
 ---@alias LeechIndex number
@@ -12,6 +15,8 @@ local Leech = require("leeches.leech")
 local Leeches = {}
 Leeches.__index = Leeches
 
+--- Create a new leeches collection.
+---
 ---@return Leeches
 function Leeches.new()
     local data = {
@@ -21,6 +26,8 @@ function Leeches.new()
     return setmetatable(data, Leeches)
 end
 
+--- Get the leeches collection for the given reference.
+---
 ---@return Leeches|nil
 function Leeches.get(ref)
     if ref.supportsLuaData then
@@ -29,6 +36,8 @@ function Leeches.get(ref)
     end
 end
 
+--- Get the leeches collection for the given reference, creating it if necessary.
+---
 ---@return Leeches
 function Leeches.getOrCreate(ref)
     local leeches = Leeches.get(ref)
@@ -39,64 +48,68 @@ function Leeches.getOrCreate(ref)
     return leeches
 end
 
+--- Iterate over all active leeches.
+---
+---@return fun():Leech
+function Leeches:iterActiveLeeches()
+    return coroutine.wrap(function()
+        for _, leech in pairs(self.activeLeeches) do
+            coroutine.yield(setmetatable(leech, Leech))
+        end
+    end)
+end
+
+--- Adds a new leech to the given reference, if possible.
+---
 ---@param ref tes3reference
 function Leeches:addLeech(ref, timestamp)
-    if not ref.sceneNode then
-        return
-    end
-
     local index = table.remove(self.vacantLeeches)
     if index == nil then -- all indices are active
         return
     end
 
-    -- Create leech.
-
+    -- Add the leech.
     local leech = Leech:new(index, timestamp)
     table.insert(self.activeLeeches, leech)
 
-    -- Trigger Sounds.
+    -- Create visuals.
+    if ref.sceneNode then
+        leech:addVisuals(ref)
+    end
 
-    self:addSound(ref)
-
-    -- Attach Visuals.
-
-    local attachPoints = utils.getAttachPoints()
-    local attachNode = assert(attachPoints[index])
-
-    local shape = utils.getLeechMesh()
-    shape.translation = attachNode.translation
-    shape.rotation = attachNode.rotation
-    shape.scale = attachNode.scale
-    shape.name = leech:getName()
-
-    for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
-        local bone = sceneNode:getObjectByName(attachNode.parent.name)
-        bone:attachChild(shape:clone()) ---@diagnostic disable-line
-        bone:update()
-        bone:updateEffects()
-        bone:updateProperties()
+    -- Create sounds.
+    if ref == tes3.player then
+        self:addSounds(ref)
     end
 end
 
+--- Remove the given leech from the given reference.
+---
 ---@param ref tes3reference
+---@param leech Leech
 function Leeches:removeLeech(ref, leech)
-    table.removevalue(self.activeLeeches, leech)
+    local success = table.removevalue(self.activeLeeches, leech)
+    if success == nil then
+        log:warn("Failed to remove leech: %s", leech)
+        return
+    end
     table.insert(self.vacantLeeches, leech.index)
 
-    -- Remove Sounds.
-    if self:numActive() == 0 then
-        self:removeSound(ref)
-    end
+    physics.createFallingLeech(ref, leech)
 
     -- Detach Visuals.
-    ---@cast leech Leech
     local name = leech:getName()
     for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
         local shape = sceneNode:getObjectByName(name)
         if shape then
             shape.parent:detachChild(shape)
         end
+    end
+
+    -- Remove Sounds.
+    if self:numActive() == 0 then
+        self:removeSounds(ref)
+        ref.data.leeches = nil
     end
 end
 
@@ -111,11 +124,16 @@ function Leeches:removeExpired(ref, timestamp)
             return
         end
         self:removeLeech(ref, leech)
+        tes3.messageBox("Leech Expired! (%s) (%d)", ref, self:numActive())
     end
 end
 
+---@raturn Leech|nil
 function Leeches:getOldestActiveLeech()
-    return self.activeLeeches[1]
+    local leech = self.activeLeeches[1]
+    if leech ~= nil then
+        return setmetatable(leech, Leech)
+    end
 end
 
 ---@return number
@@ -124,7 +142,7 @@ function Leeches:numActive()
 end
 
 ---@param ref tes3reference
-function Leeches:addSound(ref)
+function Leeches:addSounds(ref)
     if self:numActive() == 1 then
         tes3.removeSound({ reference = ref, sound = "leech_sound2" })
         tes3.playSound({ reference = ref, sound = "leech_sound1", loop = true })
@@ -136,9 +154,16 @@ function Leeches:addSound(ref)
 end
 
 ---@param ref tes3reference
-function Leeches:removeSound(ref)
+function Leeches:removeSounds(ref)
     tes3.removeSound({ reference = ref, sound = "leech_sound1" })
     tes3.removeSound({ reference = ref, sound = "leech_sound2" })
+end
+
+function Leeches:__tojson(state)
+    return json.encode({
+        activeLeeches = self.activeLeeches,
+        vacantLeeches = self.vacantLeeches,
+    }, state)
 end
 
 return Leeches
