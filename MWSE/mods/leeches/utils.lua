@@ -55,9 +55,10 @@ function this.isBitterCoastRegion(cell)
     return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
 end
 
---- TODO: make this more robust.
-function this.isInsideScum(ref)
-    return ref.position.z < -20
+---@return boolean
+function this.isInWater(ref)
+    local waterLevel = ref.cell.waterLevel or 0
+    return ref.position.z < (waterLevel - 20)
 end
 
 ---@return fun():tes3reference

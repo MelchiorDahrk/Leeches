@@ -14,7 +14,7 @@ local leechedReferences = {}
 ---@param timestamp number
 local function globalAttachLeeches(timestamp)
     for ref in utils.bitterCoastActorRefs() do
-        if utils.isInsideScum(ref)
+        if utils.isInWater(ref)
             and math.random() < ATTACH_CHANCE
         then
             local leeches = Leeches.getOrCreate(ref)
