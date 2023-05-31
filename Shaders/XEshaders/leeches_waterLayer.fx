@@ -1,24 +1,35 @@
-static const float3 blood = float3(0.545, 0.0, 0.0);
-static const float intensity = 0.05;
+static const float3 blood = float3(0.04, 0.0, 0.0);
 
 float waterLevel = 0.0;
 
-float fogstart;
-float fogrange;
+float fognearstart;
+float fognearrange;
+float3 fognearcol;
 
 float3 eyepos;
+
+float fov;
+float2 rcpres;
 
 float4x4 mview;
 float4x4 mproj;
 
 texture lastshader;
 texture depthframe;
+texture lastpass;
 
 sampler s0 = sampler_state { texture = <lastshader>; addressu = clamp; addressv = clamp; magfilter = point; minfilter = point; };
 sampler s1 = sampler_state { texture = <depthframe>; addressu = clamp; addressv = clamp; magfilter = linear; minfilter = linear; };
 
+
 float4 sample(sampler2D s, float2 t) {
     return tex2Dlod(s, float4(t, 0, 0));
+}
+
+float3 toView(float2 tex, float depth) {
+    static const float2 invproj =  2.0 * tan(0.5 * radians(fov)) * float2(1, rcpres.x / rcpres.y);
+    float2 xy = depth * (tex - 0.5) * invproj;
+    return float3(xy, depth);
 }
 
 float3 toWorld(float2 tex) {
@@ -33,10 +44,11 @@ float4 blendWaterLayer(float2 tex : TEXCOORD0) : COLOR {
     float depth = sample(s1, tex);
 
     float3 position = eyepos + toWorld(tex) * depth;
-    if (position.z <= waterLevel) {
-        float fog = saturate((depth - fogstart) / fogrange);
-        float blend = 1.0 - pow(fog, intensity);
-        color = lerp(color, blood, blend);
+    if (position.z <= (waterLevel + 5)) {
+        float dist = length(toView(tex, depth));
+        float fog = saturate((fognearrange - dist) / (fognearrange - fognearstart));
+        float3 bloodfog = lerp(fognearcol, blood, fog);
+        color = lerp(color, bloodfog, fog * 0.8);
     }
 
     return float4(color, 1.0);
