@@ -1,6 +1,7 @@
 local log = require("leeches.log")
-local pathing = require("leeches.pathing")
 local utils = require("leeches.utils")
+
+local pathing = require("leeches.libs.pathing")
 
 local function startTrailingSequence()
     local ref = utils.getReference("leech_npc_mondrar")
