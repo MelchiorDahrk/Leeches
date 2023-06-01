@@ -67,6 +67,6 @@ float4 blendWaterLayer(float2 tex : TEXCOORD0) : COLOR {
     return float4(color, 1.0);
 }
 
-technique T0<string MGEinterface = "MGE XE 0";> {
+technique T0<string MGEinterface = "MGE XE 0"; string category = "atmosphere"; int priorityAdjust = -10000> {
     pass { PixelShader = compile ps_3_0 blendWaterLayer(); }
 }
