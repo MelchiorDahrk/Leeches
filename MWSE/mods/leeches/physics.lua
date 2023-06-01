@@ -1,4 +1,4 @@
-local Leeches = require("leeches.leeches")
+local log = require("leeches.log")
 local utils = require("leeches.utils")
 
 local PHYSICS_FPS = 1 / 60
@@ -9,17 +9,25 @@ local DOWN = tes3vector3.new(0, 0, -1)
 local SPIN = tes3matrix33.new()
 SPIN:toRotationZ(math.rad(120) * PHYSICS_FPS)
 
---- TODO: make leeches continue falling after reloading?
+---@type table<tes3reference, niNode>
 local fallingLeeches = {}
 
----@param vfxNode niNode
+
+--- Get the falling particle for this vfx effectNode.
+---
+---@param effectNode niNode
 ---@return niParticles, niPerParticleData
-local function getParticle(vfxNode)
-    local particles = vfxNode:getObjectByName("Particles") --[[@as niParticles]]
+local function getParticle(effectNode)
+    local particles = effectNode:getObjectByName("Particles") --[[@as niParticles]]
     local particle = particles.controller.particleData[1] ---@diagnostic disable-line
     return particles, particle
 end
 
+
+--- Create a vfx consisting of a single falling particle.
+---
+--- The initial position and velocity are calculated from the given reference.
+---
 ---@param ref tes3reference
 local function createLeechVFX(ref)
     local vfx = tes3.createVisualEffect({
@@ -28,8 +36,8 @@ local function createLeechVFX(ref)
         lifespan = 10,
     })
 
-    -- initial momentum (30 to 60)
-    local momentum = utils.rand(30, 60)
+    -- initial velocity (30 to 60)
+    local velocity = utils.rand(30, 60)
 
     -- upward bias (15% to 30%)
     local bias = utils.rand(0.15, 0.30)
@@ -38,60 +46,102 @@ local function createLeechVFX(ref)
     -- apply initial particle velocity
     local particles, particle = getParticle(vfx.effectNode)
     local r = particles.worldTransform.rotation:transpose()
-    particle.velocity = r * direction * momentum
+    particle.velocity = r * direction * velocity
 
     return vfx
 end
 
---- Allow shaking off leeches by attacking.
+
+--- Handle expired and falling leeches.
 ---
----@param e attackEventData
-local function onAttack(e)
-    local leeches = Leeches.get(e.reference)
-    if leeches == nil then
+local function cleanupReference(ref)
+    -- Ignore manually-placed leeches from other mods.
+    if ref.sourceMod then
         return
     end
 
-    local leech = leeches:getOldestActiveLeech()
-    if leech == nil then
+    -- Only interested in references with custom data.
+    local data = ref.data
+    if data == nil then
         return
     end
 
-    local shape = leech:getSceneNode(e.reference)
-    if shape == nil then
-        return
+    -- Handle expired leeches.
+    if data.leech_expireTime then
+        if tes3.getSimulationTimestamp() > data.leech_expireTime then
+            log:info("Expired leech detected.")
+
+            ref:disable()
+            ref:delete()
+
+            fallingLeeches[ref] = nil
+            return false
+        end
     end
 
-    -- Create the leech reference.
-    local t = shape.worldTransform
-    local ref = tes3.createReference({
-        object = "leech_ingred",
-        cell = e.reference.cell,
-        position = t.translation,
-        orientation = t.rotation:toEulerXYZ(),
-    })
+    -- Handle falling leeches.
+    if data.leech_falling then
+        data.leech_falling = nil
+        log:info("Suspended leech detected.")
 
-    -- Create associated leech VFX.
-    local vfx = createLeechVFX(ref)
+        local rayhit = tes3.rayTest({
+            position = ref.position,
+            direction = DOWN,
+            ignore = { tes3.game.worldPickRoot, tes3.player.sceneNode },
+        })
+        if rayhit then
+            ref.position = rayhit.intersection
+        end
 
-    -- Track the reference with its associated vfx.
-    fallingLeeches[ref] = vfx.effectNode
-
-    leeches:removeLeech(e.reference, leech)
+        fallingLeeches[ref] = nil
+    end
 end
-event.register("attack", onAttack)
+
+--- Handle expired and falling leeches after loading or resting.
+---
+--- This is done to avoid bloating save files with too many leaches.
+---
+local function cleanupCells(e)
+    for _, cell in pairs(tes3.getActiveCells()) do
+        for ref in cell:iterateReferences(tes3.objectType.ingredient) do
+            cleanupReference(ref)
+        end
+    end
+end
+event.register("loaded", cleanupCells, { priority = -1 })
+event.register("calcRestInterrupt", cleanupCells, { priority = -1 })
+
+--- Handle expired and falling leeches after being activated.
+---
+--- This usually occurs when returning to a previously visited cell.
+--- Time may have passed or the vfx expired, so a cleanup is needed.
+---
+---@param e referenceActivatedEventData
+event.register("referenceActivated", function(e)
+    cleanupReference(e.reference)
+end, { priority = 1e7 })
+
+--- Stop tracking references if they get deactivated.
+---
+---@param e referenceDeactivatedEventData
+event.register("referenceDeactivated", function(e)
+    fallingLeeches[e.reference] = nil
+end)
 
 --- Implements leeches visually falling.
 ---
 local function onPhysicsTick()
     for ref, vfxNode in pairs(fallingLeeches) do
-        ---@cast ref tes3reference
-        ---@cast vfxNode niNode
+        -- Bail if the scene node has been orphaned.
+        if vfxNode.parent == nil then
+            log:warn("VFX node has been detatched.")
+            cleanupReference({ reference = ref })
+            return
+        end
 
         -- Get position of gravity-driven particle.
         local particles = vfxNode:getObjectByName("Particles")
-        local vertex = particles.data.vertices[1]
-        local position = vfxNode.worldTransform * vertex
+        local position = vfxNode.worldTransform * particles.data.vertices[1]
 
         -- Get orientation with some random spin added.
         local orientation = (SPIN * ref.sceneNode.rotation):toEulerXYZ()
@@ -103,13 +153,14 @@ local function onPhysicsTick()
             ignore = { tes3.game.worldPickRoot, tes3.player.sceneNode },
         })
 
-        -- Assume this is ground level if there was no intersection.
+        -- Assume it is ground level if there was no intersection.
         local intersection = rayhit and rayhit.intersection or position
 
-        -- When close to the ground snap to it and stop tracking.
+        -- If close to the ground snap it there and stop tracking.
         if position:distance(intersection) <= 1 then
+            position.z = position.z - ref.object.boundingBox.min.z
+            ref.data.leech_falling = nil
             fallingLeeches[ref] = nil
-            position.z = position.z + ref.object.boundingBox.max.z
         end
 
         -- Apply updates
@@ -118,7 +169,6 @@ local function onPhysicsTick()
     end
 end
 event.register("loaded", function()
-    -- TODO: Instead we could trigger on cell changed when intering a leech region.
     timer.start({
         iterations = -1,
         duration = PHYSICS_FPS,
@@ -126,8 +176,45 @@ event.register("loaded", function()
     })
 end)
 
---- Stop tracking references if they get deactivated.
 ---
-event.register("referenceDeactivated", function(e)
-    fallingLeeches[e.reference] = nil
-end)
+---
+
+---
+--- Public API
+---
+
+local this = {}
+
+---@param reference tes3reference
+---@param leech Leech
+function this.createFallingLeech(reference, leech)
+    local sceneNode = leech:getSceneNode(reference)
+    if sceneNode == nil then
+        return
+    end
+
+    -- Save the leeches world transform.
+    local t = sceneNode.worldTransform
+
+    -- Create ingredient leech reference.
+    local ref = tes3.createReference({
+        object = "leech_ingred",
+        cell = reference.cell,
+        position = t.translation,
+        orientation = t.rotation:toEulerXYZ(),
+    })
+
+    -- Add a flag indicating this leech is falling.
+    ref.data.leech_falling = true
+
+    -- Add a timestamp for when this leech expires.
+    ref.data.leech_expireTime = tes3.getSimulationTimestamp() + 12
+
+    -- Create a VFX for gravity falling.
+    local vfx = createLeechVFX(ref)
+
+    -- Track the reference with its associated vfx.
+    fallingLeeches[ref] = vfx.effectNode
+end
+
+return this

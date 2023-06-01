@@ -55,9 +55,10 @@ function this.isBitterCoastRegion(cell)
     return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
 end
 
---- TODO: make this more robust.
-function this.isInsideScum(ref)
-    return ref.position.z < -20
+---@return boolean
+function this.isInWater(ref)
+    local waterLevel = ref.cell.waterLevel or 0
+    return ref.position.z < (waterLevel - 20)
 end
 
 ---@return fun():tes3reference
@@ -81,10 +82,10 @@ end
 ---@return fun():niNode
 function this.get1stAnd3rdSceneNode(ref)
     return coroutine.wrap(function()
+        coroutine.yield(ref.sceneNode)
         if ref == tes3.player then
             coroutine.yield(tes3.player1stPerson.sceneNode)
         end
-        coroutine.yield(ref.sceneNode)
     end)
 end
 

@@ -1,3 +1,4 @@
+local log = require("leeches.log")
 local utils = require("leeches.utils")
 
 local LIFESPAN_MIN_HOURS = 1
@@ -34,6 +35,42 @@ end
 ---@return niNode|nil
 function Leech:getSceneNode(ref)
     return ref.sceneNode:getObjectByName(self:getName()) ---@diagnostic disable-line
+end
+
+--- Adds visuals for this leech on the given reference.
+---
+---@param ref tes3reference
+function Leech:addVisuals(ref)
+    local attachPoints = utils.getAttachPoints()
+    local attachNode = attachPoints[self.index]
+    if attachNode == nil then
+        log:warn("No attach node for index: %d", self.index)
+        return
+    end
+
+    local parentName = attachNode.parent.name
+    local name = self:getName()
+
+    for sceneNode in utils.get1stAnd3rdSceneNode(ref) do
+        local parent = sceneNode:getObjectByName(parentName)
+        if parent and parent:getObjectByName(name) == nil then
+            local mesh = utils.getLeechMesh()
+            mesh.name = name
+            mesh:copyTransforms(attachNode) ---@diagnostic disable-line
+
+            parent:attachChild(mesh) ---@diagnostic disable-line
+            parent:update()
+            parent:updateEffects()
+            parent:updateProperties()
+        end
+    end
+end
+
+function Leech:__tojson(state)
+    return json.encode({
+        index = self.index,
+        expireTime = self.expireTime,
+    }, state)
 end
 
 return Leech
