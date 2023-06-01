@@ -1,7 +1,3 @@
-//
-// Dude you should label which mod a shader file is from
-//
-
 static const float4 blood_shallow = float4(0.07, 0.0, 0.0, 0.78);
 static const float4 blood_deep = float4(0.04, 0.0, 0.0, 0.94);
 
@@ -53,7 +49,7 @@ float4 blendWaterLayer(float2 tex : TEXCOORD0) : COLOR {
 
     float3 worldDir = toWorld(tex);
     float3 position = eyepos + worldDir * depth;
-    float d = (waterlevel + 6) - position.z;
+    float d = waterlevel - position.z;
 
     if (d > 0) {
         float dist = length(worldDir) * depth;
@@ -67,6 +63,6 @@ float4 blendWaterLayer(float2 tex : TEXCOORD0) : COLOR {
     return float4(color, 1.0);
 }
 
-technique T0<string MGEinterface = "MGE XE 0"; string category = "atmosphere"; int priorityAdjust = -10000> {
+technique T0<string MGEinterface = "MGE XE 0"; string category = "scene"; int priorityAdjust = -10000;> {
     pass { PixelShader = compile ps_3_0 blendWaterLayer(); }
 }
