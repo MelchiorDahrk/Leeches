@@ -1,6 +1,14 @@
-static const float3 blood = float3(0.04, 0.0, 0.0);
+//
+// Dude you should label which mod a shader file is from
+//
 
-float waterLevel = 0.0;
+static const float4 blood_shallow = float4(0.07, 0.0, 0.0, 0.78);
+static const float4 blood_deep = float4(0.04, 0.0, 0.0, 0.94);
+
+float waterlevel;
+
+float3 suncol;
+float3 sunamb;
 
 float fognearstart;
 float fognearrange;
@@ -19,7 +27,7 @@ texture depthframe;
 texture lastpass;
 
 sampler s0 = sampler_state { texture = <lastshader>; addressu = clamp; addressv = clamp; magfilter = point; minfilter = point; };
-sampler s1 = sampler_state { texture = <depthframe>; addressu = clamp; addressv = clamp; magfilter = linear; minfilter = linear; };
+sampler s1 = sampler_state { texture = <depthframe>; addressu = clamp; addressv = clamp; magfilter = point; minfilter = point; };
 
 
 float4 sample(sampler2D s, float2 t) {
@@ -43,12 +51,17 @@ float4 blendWaterLayer(float2 tex : TEXCOORD0) : COLOR {
     float3 color = tex2D(s0, tex);
     float depth = sample(s1, tex);
 
-    float3 position = eyepos + toWorld(tex) * depth;
-    if (position.z <= (waterLevel + 5)) {
-        float dist = length(toView(tex, depth));
+    float3 worldDir = toWorld(tex);
+    float3 position = eyepos + worldDir * depth;
+    float d = (waterlevel + 6) - position.z;
+
+    if (d > 0) {
+        float dist = length(worldDir) * depth;
         float fog = saturate((fognearrange - dist) / (fognearrange - fognearstart));
-        float3 bloodfog = lerp(fognearcol, blood, fog);
-        color = lerp(color, bloodfog, fog * 0.8);
+
+        float shore = 1 - exp(-d);
+        float4 blood = lerp(blood_deep, blood_shallow, exp(-0.06 * d));
+        color = lerp(color, blood.rgb, blood.a * shore * fog * 0.8);
     }
 
     return float4(color, 1.0);
