@@ -1,6 +1,6 @@
 local this = {}
 
----@type mgeShaderHandle|nil
+---@type mgeShaderHandle?
 local shader
 
 local NUM_FOG_VOLUMES = 2
@@ -35,7 +35,7 @@ local activeFogVolumes = {}
 ---@field density number
 
 
----@return number|nil
+---@return number?
 local function getNextAvailableIndex()
     for i = 1, NUM_FOG_VOLUMES do
         if not table.find(activeFogVolumes, i) then
@@ -46,7 +46,7 @@ end
 
 
 ---@param id string
----@return number|nil
+---@return number?
 local function getFogVolumeIndex(id)
     local index = activeFogVolumes[id]
     return index or getNextAvailableIndex()
@@ -99,7 +99,6 @@ function this.createOrUpdateFog(id, params)
     end
 end
 
-
 ---@param id string
 function this.deleteFog(id)
     local index = getFogVolumeIndex(id)
@@ -117,6 +116,5 @@ function this.deleteFog(id)
         end
     end
 end
-
 
 return this

@@ -127,7 +127,7 @@ end
 --- Optimized (cached) version of `tes3.getReference`.
 ---
 ---@param id string
----@return tes3reference|nil
+---@return tes3reference?
 function this.getReference(id)
     ---@type table<string, mwseSafeObjectHandle>
     local cache = table.getset(tes3.player.tempData, "getReferenceCache", {})

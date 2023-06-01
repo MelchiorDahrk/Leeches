@@ -28,7 +28,7 @@ end
 
 --- Get the leeches collection for the given reference.
 ---
----@return Leeches|nil
+---@return Leeches?
 function Leeches.get(ref)
     if ref.supportsLuaData then
         local leeches = ref.data.leeches
@@ -128,7 +128,7 @@ function Leeches:removeExpired(ref, timestamp)
     end
 end
 
----@raturn Leech|nil
+---@raturn Leech?
 function Leeches:getOldestActiveLeech()
     local leech = self.activeLeeches[1]
     if leech ~= nil then

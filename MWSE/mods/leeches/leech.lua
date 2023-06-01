@@ -32,7 +32,7 @@ function Leech:getName()
 end
 
 ---@param ref tes3reference
----@return niNode|nil
+---@return niNode?
 function Leech:getSceneNode(ref)
     return ref.sceneNode:getObjectByName(self:getName()) ---@diagnostic disable-line
 end
