@@ -7,6 +7,7 @@ local ATTACH_CHANCE = 1.0
 ---@type table<tes3reference, boolean>
 local leechedReferences = {}
 
+
 --- Attach leeches to actors currently standing in scum.
 ---
 --- Runs on a timer every `TICK_RATE` seconds.
@@ -25,6 +26,7 @@ local function globalAttachLeeches(timestamp)
     end
 end
 
+
 --- Detach leeches that are past their expireTime.
 ---
 --- Runs on a timer every `TICK_RATE` seconds.
@@ -42,6 +44,7 @@ local function globalDetachLeeches(timestamp)
     end
 end
 
+
 --- Timer to periodically run the above functions.
 ---
 event.register("loaded", function()
@@ -55,6 +58,7 @@ event.register("loaded", function()
         end,
     })
 end)
+
 
 --- Allow shaking off leeches by attacking.
 ---
@@ -79,6 +83,7 @@ local function onAttack(e)
 end
 event.register("attack", onAttack)
 
+
 --- Prevent resting while leeches are attached.
 ---
 ---@param e calcRestInterruptEventData
@@ -90,11 +95,13 @@ event.register("calcRestInterrupt", function(e)
     end
 end)
 
+
 --- Stop tracking references when deactivated.
 ---
 event.register("referenceDeactivated", function(e)
     leechedReferences[e.reference] = nil
 end)
+
 
 --- Start tracking references if re-activated.
 ---

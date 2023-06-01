@@ -97,6 +97,7 @@ local function cleanupReference(ref)
     end
 end
 
+
 --- Handle expired and falling leeches after loading or resting.
 ---
 --- This is done to avoid bloating save files with too many leaches.
@@ -110,6 +111,7 @@ local function cleanupCells(e)
 end
 event.register("loaded", cleanupCells, { priority = -1 })
 event.register("calcRestInterrupt", cleanupCells, { priority = -1 })
+
 
 --- Handle expired and falling leeches after being activated.
 ---
@@ -139,6 +141,7 @@ end, { priority = -1000 })
 event.register("referenceDeactivated", function(e)
     fallingLeeches[e.reference] = nil
 end)
+
 
 --- Implements leeches visually falling.
 ---
@@ -187,6 +190,7 @@ event.register("loaded", function()
         callback = onPhysicsTick,
     })
 end)
+
 
 ---
 ---
