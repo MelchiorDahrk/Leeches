@@ -20,11 +20,9 @@ float4x4 mproj;
 
 texture lastshader;
 texture depthframe;
-texture lastpass;
 
 sampler s0 = sampler_state { texture = <lastshader>; addressu = clamp; addressv = clamp; magfilter = point; minfilter = point; };
 sampler s1 = sampler_state { texture = <depthframe>; addressu = clamp; addressv = clamp; magfilter = point; minfilter = point; };
-
 
 float4 sample(sampler2D s, float2 t) {
     return tex2Dlod(s, float4(t, 0, 0));
