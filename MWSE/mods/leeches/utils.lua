@@ -52,7 +52,10 @@ end
 
 ---@param cell tes3cell
 function this.isBitterCoastRegion(cell)
-    return not (cell.isInterior or cell.region.id ~= "Bitter Coast Region")
+    if cell.isInterior then
+        return cell.id == "Hlormaren, Cultist Lair"
+    end
+    return cell.region.id == "Bitter Coast Region"
 end
 
 ---@return boolean
