@@ -147,7 +147,7 @@ function Leeches:addSounds(ref)
         tes3.removeSound({ reference = ref, sound = "leech_sound2" })
         tes3.playSound({ reference = ref, sound = "leech_sound1", loop = true })
     end
-    if self:numActive() == 9 then
+    if self:numActive() >= 9 then
         tes3.removeSound({ reference = ref, sound = "leech_sound1" })
         tes3.playSound({ reference = ref, sound = "leech_sound2", loop = true })
     end
