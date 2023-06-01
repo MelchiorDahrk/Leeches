@@ -1,3 +1,4 @@
+local wondersOfWater = include("Wonders of Water.interop")
 local LAIR_CELL = tes3.getCell({ id = "Hlormaren, Cultist Lair" })
 
 ---@return mgeShaderHandle?
@@ -29,6 +30,25 @@ local function toggleMusic(enabled)
     end
 end
 
+local cached = {}
+local function toggleUnderwaterColors(enabled)
+    local wc = tes3.worldController.weatherController
+    if not next(cached) then
+        cached.underwaterColor = wc.underwaterColor:copy()
+        cached.underwaterColorWeight = wc.underwaterColorWeight
+    end
+    if enabled then
+        wc.underwaterColor = tes3vector3.new(0.03, 0.0, 0.0)
+        wc.underwaterColorWeight = 0.94
+    else
+        wc.underwaterColor = cached.underwaterColor
+        wc.underwaterColorWeight = cached.underwaterColorWeight
+    end
+    if wondersOfWater then
+        wondersOfWater.defaultValues.underwaterColor = wc.underwaterColor:copy()
+    end
+end
+
 --- Toggle the shader and music when entering or leaving the lair.
 ---
 ---@param e cellChangedEventData
@@ -38,12 +58,14 @@ local function onCellChanged(e)
     if isLair and not wasLair then
         toggleShader(true)
         toggleMusic(true)
+        toggleUnderwaterColors(true)
     elseif wasLair and not isLair then
         toggleShader(false)
         toggleMusic(false)
+        toggleUnderwaterColors(false)
     end
 end
-event.register("cellChanged", onCellChanged)
+event.register("cellChanged", onCellChanged, { priority = 1000 })
 
 
 --- Ensure music track repeats while in the lair.
