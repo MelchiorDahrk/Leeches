@@ -1,1 +1,0 @@
-return mwse.loadConfig("leeches", {})
