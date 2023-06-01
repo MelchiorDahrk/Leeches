@@ -72,15 +72,18 @@ function Leeches:addLeech(ref, timestamp)
     local leech = Leech:new(index, timestamp)
     table.insert(self.activeLeeches, leech)
 
-    -- Create visuals.
+    -- Update visuals.
     if ref.sceneNode then
         leech:addVisuals(ref)
     end
 
-    -- Create sounds.
+    -- Update sounds.
     if ref == tes3.player then
         self:addSounds(ref)
     end
+
+    -- Update effects.
+    self:updateMagicEffects(ref)
 end
 
 --- Remove the given leech from the given reference.
@@ -95,6 +98,7 @@ function Leeches:removeLeech(ref, leech)
     end
     table.insert(self.vacantLeeches, leech.index)
 
+    -- Note: call before removing visuals!
     physics.createFallingLeech(ref, leech)
 
     -- Detach Visuals.
@@ -111,6 +115,11 @@ function Leeches:removeLeech(ref, leech)
         self:removeSounds(ref)
         ref.data.leeches = nil
     end
+
+    -- Update magic effects.
+    -- Fails on travel/resting without delayOneFrame...
+    local handle = assert(tes3.makeSafeObjectHandle(ref))
+    timer.delayOneFrame(function() self:updateMagicEffects(assert(handle:getObject())) end)
 end
 
 --- Remove all leeches from the reference that have expired according to the given timestamp.
@@ -157,6 +166,55 @@ end
 function Leeches:removeSounds(ref)
     tes3.removeSound({ reference = ref, sound = "leech_sound1" })
     tes3.removeSound({ reference = ref, sound = "leech_sound2" })
+end
+
+---@param ref tes3reference
+function Leeches:updateMagicEffects(ref)
+    if ref ~= tes3.player then
+        return
+    end
+
+    local mobile = assert(ref.mobile) --[[@as tes3mobileActor]]
+
+    -- Get all leech effects.
+    local effects = mobile:getActiveMagicEffects({ effect = tes3.effect.drainHealth })
+    for i = #effects, 1, -1 do
+        local instance = effects[i].instance
+        if instance.state == tes3.spellState.retired
+            or instance.sourceType ~= tes3.magicSourceType.alchemy
+            or instance.source.name ~= "Leech! (5 pts)"
+        then
+            table.remove(effects, i)
+        end
+    end
+
+    local numEffects = #effects
+    local numLeeches = self:numActive()
+
+    -- Retire excess effects.
+    local numExcess = math.max(0, numEffects - numLeeches)
+    for i = 1, numExcess do
+        effects[i].instance.state = tes3.spellState.retired
+    end
+
+    -- Apply missing effects.
+    local timescale = tes3.worldController.timescale.value
+    local numMissing = math.max(0, numLeeches - numEffects)
+    for _ = 1, numMissing do
+        tes3.applyMagicSource({
+            reference = ref,
+            bypassResistances = true,
+            name = "Leech! (5 pts)",
+            effects = {
+                {
+                    id = tes3.effect.drainHealth,
+                    min = 5,
+                    max = 5,
+                    duration = (3 / timescale) * 60 * 60, -- 3 hours,
+                },
+            },
+        })
+    end
 end
 
 function Leeches:__tojson(state)

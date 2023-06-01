@@ -90,10 +90,11 @@ event.register("attack", onAttack)
 event.register("calcRestInterrupt", function(e)
     local leeches = Leeches.get(tes3.player)
     if leeches and leeches:numActive() > 0 then
+        e.claim = true
         tes3.wakeUp()
         tes3.messageBox("You can't rest with leeches on you.")
     end
-end)
+end, { priority = 1000 })
 
 
 --- Stop tracking references when deactivated.

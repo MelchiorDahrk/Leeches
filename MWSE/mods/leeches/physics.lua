@@ -102,7 +102,7 @@ end
 ---
 --- This is done to avoid bloating save files with too many leaches.
 ---
-local function cleanupCells(e)
+local function cleanupCells()
     for _, cell in pairs(tes3.getActiveCells()) do
         for ref in cell:iterateReferences(tes3.objectType.ingredient) do
             cleanupReference(ref)
