@@ -79,6 +79,17 @@ local function onAttack(e)
 end
 event.register("attack", onAttack)
 
+--- Prevent resting while leeches are attached.
+---
+---@param e calcRestInterruptEventData
+event.register("calcRestInterrupt", function(e)
+    local leeches = Leeches.get(tes3.player)
+    if leeches and leeches:numActive() > 0 then
+        tes3.wakeUp()
+        tes3.messageBox("You can't rest with leeches on you.")
+    end
+end)
+
 --- Stop tracking references when deactivated.
 ---
 event.register("referenceDeactivated", function(e)
