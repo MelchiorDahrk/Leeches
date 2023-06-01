@@ -121,6 +121,18 @@ event.register("referenceActivated", function(e)
     cleanupReference(e.reference)
 end, { priority = 1e7 })
 
+
+--- Remove reference data when acquiring leeches so inventory stacking works.
+---
+event.register("activate", function(e)
+    if e.target.supportsLuaData then
+        local data = e.target.data
+        data.leech_expireTime = nil
+        data.leech_falling = nil
+    end
+end, { priority = -1000 })
+
+
 --- Stop tracking references if they get deactivated.
 ---
 ---@param e referenceDeactivatedEventData
