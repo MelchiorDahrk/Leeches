@@ -70,12 +70,16 @@ local function onAttack(e)
         return
     end
 
-    local leech = leeches:getOldestActiveLeech()
-    if leech == nil then
-        return
+    -- Remove 15% of leeches on each attack.
+    local numActive = leeches:numActive()
+    local numRemove = math.max(math.ceil(numActive * 0.15), 4)
+    for _ = 1, numRemove do
+        local leech = leeches:getOldestActiveLeech()
+        if leech then
+            leeches:removeLeech(ref, leech)
+        end
     end
 
-    leeches:removeLeech(ref, leech)
     if leeches:numActive() == 0 then
         leechedReferences[ref] = nil
     end
