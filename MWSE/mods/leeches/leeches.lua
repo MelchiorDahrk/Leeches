@@ -133,7 +133,6 @@ function Leeches:removeExpired(ref, timestamp)
             return
         end
         self:removeLeech(ref, leech)
-        tes3.messageBox("Leech Expired! (%s) (%d)", ref, self:numActive())
     end
 end
 
