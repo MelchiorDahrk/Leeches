@@ -1,8 +1,8 @@
 local utils = require("leeches.utils")
 local Leeches = require("leeches.leeches")
 
-local TICK_RATE = 0.25
-local ATTACH_CHANCE = 1.0
+local TICK_RATE = 1.25
+local ATTACH_CHANCE = 0.6
 
 ---@type table<tes3reference, boolean>
 local leechedReferences = {}
