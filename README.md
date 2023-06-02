@@ -33,3 +33,7 @@ This mod requires [MWSE](https://www.nexusmods.com/morrowind/mods/41102).
 
 ### Recommendations
 [Vapourmist](https://www.nexusmods.com/morrowind/mods/50517) enhances the ambiance of the dungeons in this mod. I recommend it for dungeon delving!
+
+### Credits
+R-zero - pipe/cigar meshes
+LondonRook - dungeon cage
