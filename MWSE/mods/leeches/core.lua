@@ -1,8 +1,7 @@
 local utils = require("leeches.utils")
 local Leeches = require("leeches.leeches")
 
-local TICK_RATE = 1.25
-local ATTACH_CHANCE = 0.6
+local TICK_RATE = 0.75
 
 ---@type table<tes3reference, boolean>
 local leechedReferences = {}
@@ -15,7 +14,7 @@ local leechedReferences = {}
 ---@param timestamp number
 local function globalAttachLeeches(timestamp)
     for ref in utils.bitterCoastActorRefs() do
-        if math.random() < ATTACH_CHANCE
+        if math.random() < utils.getAttachChance(ref)
             and utils.isInWater(ref)
         then
             local leeches = Leeches.getOrCreate(ref)

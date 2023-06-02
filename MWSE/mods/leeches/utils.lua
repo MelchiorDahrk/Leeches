@@ -5,6 +5,7 @@ local LEECH_MESH = nil
 
 ---@type niAVObject[]
 local ATTACH_POINTS = {}
+local ATTACH_CHANCE = 0.36
 
 function this.range(n)
     local t = {}
@@ -48,6 +49,14 @@ function this.getAttachPoints()
         end
     end
     return ATTACH_POINTS
+end
+
+---@param ref tes3reference
+function this.getAttachChance(ref)
+    if ref.cell.id == "Hlormaren, Cultist Lair" then
+        return 1.0
+    end
+    return ATTACH_CHANCE
 end
 
 ---@param cell tes3cell
