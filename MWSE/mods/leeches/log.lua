@@ -2,7 +2,7 @@ local logger = require("logging.logger")
 
 local log = logger.new({
     name = "Leeches",
-    logLevel = "DEBUG",
+    logLevel = "INFO",
     logToConsole = false,
     includeTimestamp = false,
 })

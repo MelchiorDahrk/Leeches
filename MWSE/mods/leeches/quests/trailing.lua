@@ -1,7 +1,6 @@
 local log = require("leeches.log")
 local utils = require("leeches.utils")
-
-local pathing = require("leeches.libs.pathing")
+local pathing = require("leeches.quests.pathing")
 
 local function startTrailingSequence()
     local ref = utils.getReference("leech_npc_mondrar")
@@ -40,8 +39,10 @@ local function startTrailingSequence()
             { -24545.00, -10570.00, 960.00 },
             -- other side of the cell border
             { -24625.00, -10499.00, 960.00 },
+            -- near the sewers entrance
+            { -26404.00, -10547.00, 960.00 },
             -- entrance to sewers
-            { -25725.00, -10539.00, 960.00 },
+            { -26552.01, -10574.20, 962.00 },
         },
     })
 end

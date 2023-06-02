@@ -69,7 +69,7 @@ local function cleanupReference(ref)
     -- Handle expired leeches.
     if data.leech_expireTime then
         if tes3.getSimulationTimestamp() > data.leech_expireTime then
-            log:info("Expired leech detected.")
+            log:debug("Expired leech detected.")
 
             ref:disable()
             ref:delete()
@@ -82,7 +82,7 @@ local function cleanupReference(ref)
     -- Handle falling leeches.
     if data.leech_falling then
         data.leech_falling = nil
-        log:info("Suspended leech detected.")
+        log:debug("Suspended leech detected.")
 
         local rayhit = tes3.rayTest({
             position = ref.position,

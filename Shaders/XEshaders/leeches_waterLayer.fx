@@ -1,5 +1,5 @@
-static const float4 blood_shallow = float4(0.03, 0.0, 0.0, 0.78);
-static const float4 blood_deep = float4(0.09, 0.0, 0.0, 0.94);
+static const float4 blood_shallow = float4(0.08, 0.0, 0.0, 0.78);
+static const float4 blood_deep = float4(0.05, 0.0, 0.0, 0.94);
 
 float waterlevel;
 

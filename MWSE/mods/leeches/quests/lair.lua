@@ -38,7 +38,7 @@ local function toggleUnderwaterColors(enabled)
         cached.underwaterColorWeight = wc.underwaterColorWeight
     end
     if enabled then
-        wc.underwaterColor = tes3vector3.new(0.03, 0.0, 0.0)
+        wc.underwaterColor = tes3vector3.new(0.05, 0.0, 0.0)
         wc.underwaterColorWeight = 0.94
     else
         wc.underwaterColor = cached.underwaterColor
