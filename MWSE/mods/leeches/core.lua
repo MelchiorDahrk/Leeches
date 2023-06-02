@@ -119,9 +119,7 @@ event.register("referenceActivated", function(e)
         leech:addVisuals(e.reference)
     end
 
-    if e.reference == tes3.player then
-        leeches:addSounds(e.reference)
-    end
+    leeches:addSounds(e.reference)
 
     leechedReferences[e.reference] = true
 end)

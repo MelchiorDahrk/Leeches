@@ -78,9 +78,7 @@ function Leeches:addLeech(ref, timestamp)
     end
 
     -- Update sounds.
-    if ref == tes3.player then
-        self:addSounds(ref)
-    end
+    self:addSounds(ref)
 
     -- Update effects.
     self:updateMagicEffects(ref)
