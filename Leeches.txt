@@ -1,3 +1,2 @@
 Credits
-Kurp - blood VFX
 Rzero - pipe/cigar meshes
