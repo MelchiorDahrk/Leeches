@@ -1,3 +1,5 @@
+local animationStatus = { idle = 0, interrupted = 1, combat = 2 }
+
 --- Make water droplets less synchronized.
 local function offsetWaterDrops()
     local ref = tes3.getReference("leech_bucket_drip")
@@ -7,44 +9,59 @@ local function offsetWaterDrops()
 end
 
 local function playSleepingAnimation()
-    local detective = tes3.getReference("leech_private_eye_01")
-    local chair = tes3.getReference("leech_office_chair")
-    if not (detective and chair) then
+    local ref = tes3.getReference("leech_private_eye_01")
+    local prop = tes3.getReference("leech_office_chair")
+    if not (ref and prop) then
         return
     end
 
-    -- Offset height so we are at the chair's feet rather than its center.
-    local position = chair.position:copy()
-    position.z = position.z + chair.object.boundingBox.min.z
-
-    -- Rotate 180 degrees so we face the correct direction for sitting.
-    local orientation = chair.orientation:copy()
-    orientation.z = orientation.z + math.rad(180)
+    -- Disable greeting/turning.
+    ref.mobile.movementCollision = false
+    ref.mobile.hello = 0
 
     -- Center on the chair.
-    detective.position = position
-    detective.orientation = orientation
-
-    -- Disable greeting/turning.
-    detective.mobile.hello = 0
+    ref.position = prop.position
+    ref.orientation = prop.orientation
 
     -- Play the animation.
     tes3.playAnimation({
-        reference = detective,
-        group = tes3.animationGroup.idle9,
+        reference = ref,
+        group = tes3.animationGroup.idle8,
         mesh = "leeches\\k\\chair_sleeping.nif",
     })
 
     -- Play snoring sounds.
     tes3.playSound({
-        reference = detective,
+        reference = ref,
         sound = "leeches_male_snoring",
         loop = true,
     })
+
+    -- Attach cigar.
+    local attachNode = ref.sceneNode:getObjectByName("AttachCigar") --[[@as niNode?]]
+    if attachNode then
+        local cigar = tes3.loadMesh("leeches\\m\\cigar_smoke.nif")
+        attachNode:attachChild(cigar:clone()) ---@diagnostic disable-line
+        attachNode:update()
+        attachNode:updateEffects()
+        attachNode:updateProperties()
+    end
+
+    -- Close eyes.
+    local animData = ref.mobile.animationController.animationData
+    animData.headMorphTiming = 1.7
+    animData.timeToNextBlink = 1e9
+
+    -- Update animation status.
+    ref.tempData.leech_animStatus = animationStatus.idle
+    ref.tempData.leech_animFacing = ref.facing
 end
-event.register(tes3.event.cellActivated, function(e)
-    if e.cell.id == "Balmora, Detective's Office" then
+
+local function onCellLoaded()
+    if tes3.player.cell.id == "Balmora, Detective's Office" then
         offsetWaterDrops()
         playSleepingAnimation()
     end
-end)
+end
+event.register("cellActivated", onCellLoaded)
+event.register("loaded", onCellLoaded)

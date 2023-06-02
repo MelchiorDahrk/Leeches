@@ -1,3 +1,4 @@
+local animationStatus = { idle = 0, interrupted = 1, combat = 2 }
 local animations = {
     ["leech_sewers_sleeper"] = {
         mesh = "leeches\\k\\ground_sleep.nif",
@@ -11,12 +12,6 @@ local animations = {
         mesh = "leeches\\k\\rail_lean.nif",
         prop = "leech_sewers_leaner_rail",
     },
-}
-
-local animationStatus = {
-    idle = 0,
-    interrupted = 1,
-    combat = 2,
 }
 
 ---@param e referenceActivatedEventData
