@@ -188,6 +188,10 @@ function Leeches:updateMagicEffects(ref)
         end
     end
 
+    -- Only do damage if it won't kill the actor.
+    local damage = (mobile.health.current > 5) and 1 or 0
+    local timescale = tes3.worldController.timescale.value
+
     local numEffects = #effects
     local numLeeches = self:numActive()
 
@@ -198,7 +202,6 @@ function Leeches:updateMagicEffects(ref)
     end
 
     -- Apply missing effects.
-    local timescale = tes3.worldController.timescale.value
     local numMissing = math.max(0, numLeeches - numEffects)
     for _ = 1, numMissing do
         tes3.applyMagicSource({
@@ -208,8 +211,8 @@ function Leeches:updateMagicEffects(ref)
             effects = {
                 {
                     id = tes3.effect.drainHealth,
-                    min = 5,
-                    max = 5,
+                    min = damage,
+                    max = damage,
                     duration = (3 / timescale) * 60 * 60, -- 3 hours,
                 },
             },
