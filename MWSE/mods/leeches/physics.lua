@@ -212,6 +212,11 @@ function this.createFallingLeech(reference, leech)
     -- Save the leeches world transform.
     local t = sceneNode.worldTransform
 
+    -- Don't bother for far away leeches.
+    if tes3.getPlayerEyePosition():distance(t.translation) > 4096 then
+        return
+    end
+
     -- Create ingredient leech reference.
     local ref = tes3.createReference({
         object = "leech_ingred",
