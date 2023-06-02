@@ -186,7 +186,7 @@ function Leeches:updateMagicEffects(ref)
     end
 
     -- Only do damage if it won't kill the actor.
-    local damage = (mobile.health.current > 5) and 1 or 0
+    local damage = (mobile.health.current > 6) and 3 or 0
     local timescale = tes3.worldController.timescale.value
 
     local numEffects = #effects
