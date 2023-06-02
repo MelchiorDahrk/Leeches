@@ -182,7 +182,7 @@ function Leeches:updateMagicEffects(ref)
         local instance = effects[i].instance
         if instance.state == tes3.spellState.retired
             or instance.sourceType ~= tes3.magicSourceType.alchemy
-            or instance.source.name ~= "Leech! (5 pts)"
+            or instance.source.name ~= "Leech!"
         then
             table.remove(effects, i)
         end
@@ -207,7 +207,7 @@ function Leeches:updateMagicEffects(ref)
         tes3.applyMagicSource({
             reference = ref,
             bypassResistances = true,
-            name = "Leech! (5 pts)",
+            name = "Leech!",
             effects = {
                 {
                     id = tes3.effect.drainHealth,
